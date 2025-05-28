@@ -16,3 +16,4 @@ TODO
 docker compose -f docker-compose.yaml up
 ```
 
+and go to `localhost:8082` in your browser.
