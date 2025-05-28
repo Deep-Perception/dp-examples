@@ -1,0 +1,151 @@
+volumes:
+  db:
+  snapshots:
+  edge-config-cache:
+services:
+  db:
+    image: postgres:14-alpine
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=dp_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - db:/var/lib/postgresql/data
+  edge_config:
+    image: us-central1-docker.pkg.dev/deepperception-public/standalone/edge_config:latest
+    depends_on:
+      - db
+      - iris_router
+      - vms_router
+    command: [--json_db_file=/data/event_templates.json, --cache_dir=/tmp/cache, -logtostderr]
+    environment:
+      - DB_PASSWORD=postgres
+      - DB_USER=postgres
+      - DB_NAME=dp_db
+      - DB_PORT=5432
+      - DB_HOST=db
+      - DP_IRIS_ADDRESS=host.docker.internal:50052
+      - DP_EVENTS_ADDRESS=dp-envoy:8080
+      - DP_ORCHESTRA_ADDRESS=dp-envoy:8080
+      - DP_VMS_SERVICE=dp-envoy:8080
+    ports:
+      - "50051:50051"
+    volumes:
+      # NOTE: the mounted location needs to match --cache_dir
+      - edge-config-cache:/tmp/cache
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  events_server:
+    image: us-central1-docker.pkg.dev/deepperception-public/standalone/event_server:latest
+    ports:
+      - "50053:50053"
+    volumes:
+      - snapshots:/videos
+    environment:
+      - DP_LOCAL_EVENT_SAVE=true
+      - DB_PASSWORD=postgres
+      - DB_USER=postgres
+      - DB_NAME=dp_db
+      - DB_PORT=5432
+      - DB_HOST=db
+      - DP_VMS_SERVICE=dp-envoy:8080
+    depends_on:
+      - db
+      - vms_router
+    command: [-logtostderr]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  usb_cameras:
+    image: us-central1-docker.pkg.dev/deepperception-public/standalone/usb_cameras:latest
+    privileged: true
+    ports:
+      - "50054:50054"
+    command: [-logtostderr]
+    restart: always
+  vms_router:
+    image: us-central1-docker.pkg.dev/deepperception-public/standalone/vms_router:latest
+    ports:
+      - "50055:50055"
+    restart: unless-stopped
+    environment:
+      - DB_PASSWORD=postgres
+      - DB_USER=postgres
+      - DB_NAME=dp_db
+      - DB_PORT=5432
+      - DB_HOST=db
+      - MILESTONE_BRIDGE_HOSTNAME=host.docker.internal
+    depends_on:
+      db:
+        condition: service_healthy
+    command: [-port=50055, -logtostderr]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  iris_router:
+    image: us-central1-docker.pkg.dev/deepperception-public/standalone/iris_router:latest
+    ports:
+      - "50052:50052"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: ["--backends=host.docker.internal:50056", "-logtostderr"]
+    depends_on:
+      - iris_server
+  iris_server:
+    image: us-central1-docker.pkg.dev/deepperception-public/standalone/iris_server:latest
+    network_mode: host
+    privileged: true
+    command: [--grpc_port=50056]
+    environment:
+      - EVENTS_SERVER_HOST=0.0.0.0
+      - HAILORT_SERVICE_ADDRESS=0.0.0.0:50069
+    group_add:
+      - "109"
+      - "110"
+      - "44"
+      - "46"
+    restart: always
+    depends_on:
+      - webrtc
+  dp-envoy:
+    image: us-central1-docker.pkg.dev/deepperception-public/standalone/envoy_proxy:latest
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+      - "9090:9090"
+    environment:
+      - ENVOY_UID=0
+      - DP_EDGE_CONFIG_HOSTNAME=edge_config
+      - DP_EVENTS_SERVER_HOSTNAME=events_server
+      - DP_IRIS_SERVER_HOSTNAME=0.0.0.0
+    depends_on:
+      - edge_config
+  frontend:
+    image: us-central1-docker.pkg.dev/deepperception-public/standalone/frontend:latest
+    ports:
+      - "8082:8082"
+    environment:
+      - DP_ENVOY_HOSTNAME=dp-envoy
+      - DP_WEBRTC_HOSTNAME=webrtc
+    depends_on:
+      - dp-envoy
+  webrtc:
+    image: us-central1-docker.pkg.dev/deepperception-public/standalone/webrtc:latest
+    ports:
+      - "7777:7777"
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: [-logtostderr]
+  orchestra:
+    image: us-central1-docker.pkg.dev/deepperception-public/standalone/orchestra:latest
+    command: [-logtostderr]
+    ports:
+      - "50050:50050"
+
