@@ -1,10 +1,12 @@
 # Standalone Application
 
-The standlone application allows you to connect RTSP and USB cameras. 
+The standalone application allows you to connect up to 8 RTSP and USB cameras to be
+processed using an object detection model running on a Hailo8.
 
 ## Requirements
 
-TODO
+- Docker
+- Hailo8
 
 ## Setup
 
