@@ -2,6 +2,14 @@
 
 The standlone application allows you to connect RTSP and USB cameras. 
 
+## Requirements
+
+TODO
+
+## Setup
+
+TODO
+
 ## Running
 
 ```
