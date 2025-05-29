@@ -148,4 +148,3 @@ services:
     command: [-logtostderr]
     ports:
       - "50050:50050"
-
