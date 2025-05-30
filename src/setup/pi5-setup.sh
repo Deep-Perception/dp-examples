@@ -26,7 +26,7 @@ sudo apt-get upgrade -y
 sudo apt-get install curl -y
 
 #
-#Install Docker
+# Install Docker
 #
 
 for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do sudo apt-get remove $pkg; done
