@@ -6,11 +6,11 @@ a live view for seeing the analytics, event trigger creation, and an event viewe
 
 ## Hardware Requirements
 
-- Hailo8 or Hailo8L chip
+- Hailo8 or Hailo8L chip (driver version 4.21.0 instaleld below).
 
 ## Setup for x86
 
-TODO
+Run `./src/setup/x86-setup.sh` to install the necessary dependencies.
 
 ## Setup for Raspberry Pi
 
