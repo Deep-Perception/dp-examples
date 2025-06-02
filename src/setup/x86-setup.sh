@@ -85,29 +85,11 @@ done
 # Install appropriate driver
 if [[ "$HAILO_VERSION" == "Hailo-8" ]]; then
 	curl -fsSLO https://storage.googleapis.com/deepperception_public/hailo/h8/hailort-pcie-driver_4.21.0_all.deb
-	yes | sudo dpkg -i hailort-pcie-driver_4.21.0_all.deb
-	echo "options hailo_pci force_desc_page_size=4096" | sudo tee -a /etc/modprobe.d/hailo_pci.conf >/dev/null
+	yes | sudo dpkg -i hailort-pcie-driver_4.21.0_all.de
 else
 	echo -e "\n\nSupported Hailo configuration not found, skipping driver install and exiting\n\n"
 	exit 1
 fi
-
-# Set PCI Gen3
-
-CONFIG_FILE="/boot/firmware/config.txt"
-
-add_if_missing() {
-	local line="$1"
-	if ! grep -Fxq "$line" "$CONFIG_FILE"; then
-		echo "$line" | sudo tee -a "$CONFIG_FILE" >/dev/null
-		echo "Added: $line"
-	else
-		echo "Already exists: $line"
-	fi
-}
-
-add_if_missing "dtparam=pciex1"
-add_if_missing "dtparam=pciex1_gen=3"
 
 # Remove downloaded debs
 rm *.deb

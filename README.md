@@ -2,6 +2,20 @@
 
 Collection of examples using the Deep Perception AI Platform
 
+- Standalone Object Detection for IP Cameras
+    - 8 streams
+    - Define custom events triggered by camera detections
+    - Live analytics overlay view (WebRTC)
+    - Hailo8/Hailo8L and x86/arm64 support
+    - Highly optimized AI backend
+    - See [here](./src/apps/standalone/README.md) for more information
+
+- [prometheus demo](https://github.com/Deep-Perception/prometheus-setup) 
+    - visualize Hailo8 and system utilization metrics
+    - supports 16 streams
+    - optimized backend with dynamic toggling of sources
+
+
 ## Quickstart
 
 To get started quickly with the object detection AI application for IP cameras,
